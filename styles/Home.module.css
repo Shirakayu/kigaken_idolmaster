@@ -1,168 +1,127 @@
-.page {
-  --gray-rgb: 0, 0, 0;
-  --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
-  --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
-
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-
-  display: grid;
-  grid-template-rows: 20px 1fr 20px;
-  align-items: center;
-  justify-items: center;
-  min-height: 100svh;
-  padding: 80px;
-  gap: 64px;
-  font-family: var(--font-geist-sans);
-}
-
-@media (prefers-color-scheme: dark) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-  }
+/* styles/Home.module.css */
+.container {
+  padding: 0 2rem;
 }
 
 .main {
+  min-height: 100vh;
+  padding: 4rem 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  grid-row-start: 2;
+  justify-content: center;
+  align-items: center;
 }
 
-.main ol {
-  font-family: var(--font-geist-mono);
-  padding-left: 0;
+.title {
   margin: 0;
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: -0.01em;
-  list-style-position: inside;
+  line-height: 1.15;
+  font-size: 3rem; /* 少し小さく */
+  text-align: center;
 }
 
-.main li:not(:last-of-type) {
-  margin-bottom: 8px;
+.description {
+  margin: 2rem 0; /* 少し調整 */
+  line-height: 1.5;
+  font-size: 1.2rem; /* 少し小さく */
+  text-align: center;
 }
 
-.main code {
-  font-family: inherit;
-  background: var(--gray-alpha-100);
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-.ctas {
+.grid {
   display: flex;
-  gap: 16px;
-}
-
-.ctas a {
-  appearance: none;
-  border-radius: 128px;
-  height: 48px;
-  padding: 0 20px;
-  border: none;
-  border: 1px solid transparent;
-  transition:
-    background 0.2s,
-    color 0.2s,
-    border-color 0.2s;
-  cursor: pointer;
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  line-height: 20px;
-  font-weight: 500;
+  max-width: 800px; /* グリッドの最大幅 */
+  margin-top: 3rem;
 }
 
-a.primary {
-  background: var(--foreground);
-  color: var(--background);
-  gap: 8px;
+.card {
+  margin: 1rem;
+  padding: 1.5rem;
+  text-align: left;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  width: 300px; /* カード幅固定 */
+  cursor: pointer;
 }
 
-a.secondary {
-  border-color: var(--gray-alpha-200);
-  min-width: 158px;
+.card:hover,
+.card:focus,
+.card:active {
+  color: #0070f3;
+  border-color: #0070f3;
 }
 
-.footer {
-  grid-row-start: 3;
-  display: flex;
-  gap: 24px;
+.card.selected {
+  border-color: #0070f3;
+  box-shadow: 0 0 10px #0070f3;
 }
 
-.footer a {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.card h2 {
+  margin: 0 0 0.5rem 0; /* 少し調整 */
+  font-size: 1.3rem; /* 少し小さく */
 }
 
-.footer img {
-  flex-shrink: 0;
+.card p {
+  margin: 0;
+  font-size: 1rem; /* 少し小さく */
+  line-height: 1.4; /* 少し調整 */
 }
 
-/* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
-  a.primary:hover {
-    background: var(--button-primary-hover);
-    border-color: transparent;
-  }
-
-  a.secondary:hover {
-    background: var(--button-secondary-hover);
-    border-color: transparent;
-  }
-
-  .footer a:hover {
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
+.startButton {
+  margin-top: 2rem;
+  padding: 1rem 2rem;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  text-decoration: none;
 }
 
-@media (max-width: 600px) {
-  .page {
-    padding: 32px;
-    padding-bottom: 80px;
-  }
-
-  .main {
-    align-items: center;
-  }
-
-  .main ol {
-    text-align: center;
-  }
-
-  .ctas {
-    flex-direction: column;
-  }
-
-  .ctas a {
-    font-size: 14px;
-    height: 40px;
-    padding: 0 16px;
-  }
-
-  a.secondary {
-    min-width: auto;
-  }
-
-  .footer {
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-  }
+.startButton:hover {
+  background-color: #005bb5;
 }
 
-@media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
-  }
+/* styles/Home.module.css に追記 */
+.backButton {
+  display: inline-block; /* ボタンらしく表示 */
+  margin-top: 1rem; /* 上の要素との間隔 */
+  padding: 0.8rem 1.5rem; /* パディング */
+  background-color: #6c757d; /* 背景色 (例: グレー) */
+  color: white; /* 文字色 */
+  border: none; /* ボーダーなし */
+  border-radius: 5px; /* 角丸 */
+  font-size: 1rem; /* フォントサイズ */
+  cursor: pointer; /* カーソルをポインターに */
+  text-decoration: none; /* 下線なし */
+  text-align: center; /* 中央揃え */
 }
+
+.backButton:hover {
+  background-color: #5a6268; /* ホバー時の背景色 */
+}
+
+
+.tutorial-disabled {
+  opacity: 0.5 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+/* @keyframes pulse {
+  0% {
+    box-shadow: 0 0 5px yellow;
+  }
+  50% {
+    box-shadow: 0 0 15px gold;
+  }
+  100% {
+    box-shadow: 0 0 5px yellow;
+  }
+} */
