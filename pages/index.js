@@ -7,17 +7,17 @@ export default function TitlePage() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>生命研あい〇るますたー</title>
-        <meta name="description" content="〇〇と出逢い、夢に翔ける" />
+        <title>KIGAあい〇るますたー</title>
+        <meta name="description" content="KIGAと出逢い、夢に翔ける" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main} style={{ justifyContent: 'center', alignItems: 'center' }}>
         <h1 className={styles.title} style={{ fontSize: '4rem', marginBottom: '2rem' }}>
-          研究者育成ゲーム
+          KIGAアイ〇ルマスター
         </h1>
         <p className={styles.description} style={{ fontSize: '1.5rem', marginBottom: '3rem' }}>
-          最高の研究者を目指して、育成と発表を繰り返そう！
+          KIGAと出逢い、夢に翔ける
         </p>
         <div style={{ display: 'flex', gap: '20px' }}> {/* ボタンを横並びにするためにflexを追加 */}
           <Link
