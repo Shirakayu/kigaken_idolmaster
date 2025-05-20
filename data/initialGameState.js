@@ -8,21 +8,21 @@ export const EXAM_SETTINGS = [
     roundLimit: 5,
     normaScore: 50,
     name: "第1回中間報告会",
-    roundLimitBeforeExam: 5,
+    roundLimitBeforeExam: 7,
     maxSatisfactionPerExaminer: 75
   },
   {
     roundLimit: 5,
     normaScore: 75,
     name: "第2回中間報告会",
-    roundLimitBeforeExam: 5,
+    roundLimitBeforeExam: 7,
     maxSatisfactionPerExaminer: 100
   },
   {
     roundLimit: 5,
     normaScore: 100,
     name: "最終研究発表会",
-    roundLimitBeforeExam: 6,
+    roundLimitBeforeExam: 9,
     maxSatisfactionPerExaminer: 135
   },
 ];
