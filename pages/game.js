@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { EXAM_SETTINGS, TOTAL_EXAMS } from '../data/initialGameState';
+import { EXAM_SETTINGS, TOTAL_EXAMS } from '../data/initialGameState'; // initialDeckCardIds のために STATUS_TYPE も必要だったが、initialDeckCardIds の取得方法変更により不要になる可能性
 
 import PlayerStatusDisplay from '../components/PlayerStatusDisplay';
 import MentorInfoDisplay from '../components/MentorInfoDisplay';
@@ -12,6 +12,7 @@ import ShikenPhaseUI from '../components/ShikenPhaseUI';
 import ItemUseResultModal from '../components/ItemUseResultModal';
 import ItemUsePhaseUI from '../components/ItemUsePhaseUI';
 import ExamResultDisplay from '../components/ExamResultDisplay';
+import DeckViewerModal from '../components/DeckViewerModal'; // ★ 新規インポート
 
 import { useGameInitialization } from '../hooks/useGameInitialization';
 import { useIkuseiLogic } from '../hooks/useIkuseiLogic';
@@ -19,11 +20,12 @@ import { useEventLogic } from '../hooks/useEventLogic';
 import { useShikenLogic } from '../hooks/useShikenLogic';
 
 import {
-    allAbilityCards,
-    useCardPoolsByRarity
-    // TARGET_TYPE // utils/cardUtils.js からのインポートをやめる
+    allAbilityCards, // ★ allAbilityCards は直接使う
+    useCardPoolsByRarity,
+    // generateUniqueCardInstanceId // game.js では直接使わない想定
 } from '../utils/cardUtils';
-import { TARGET_TYPE } from '../data/abilityCards'; // ★ data/abilityCards.js から直接インポート
+import { TARGET_TYPE } from '../data/abilityCards';
+import { initialDeckCards as rawInitialDeckCardsData } from '../data/abilityCards'; // ★ 初期デッキデータを直接インポート
 
 
 // --- Main Game Component ---
@@ -50,13 +52,16 @@ export default function GamePage() {
   const [selectedExamCardInstanceId, setSelectedExamCardInstanceId] = useState(null);
   const [selectedExamExaminerName, setSelectedExamExaminerName] = useState(null);
 
+  // ★ DeckViewerModal の表示状態管理
+  const [showDeckViewerModal, setShowDeckViewerModal] = useState(false);
 
   const cardPoolsByRarity = useCardPoolsByRarity();
-  const initialDeckCardIds = useMemo(() => {
-    if (allAbilityCards && allAbilityCards.size > 0) {
-        return Array.from(allAbilityCards.values()).filter(c => c.isInitial).map(c => c.id);
-    }
-    return [];
+
+  // initialDeckCardIds を直接データから取得する形に変更
+  const initialDeckCardInstances = useMemo(() => {
+      // 初期デッキカードはインスタンスIDを持たない (またはゲーム開始時に一意に振る) 想定
+      // ここでは baseId のみを持つオブジェクトとして扱う (DeckViewerModal側で詳細取得)
+      return rawInitialDeckCardsData.map(card => ({ baseId: card.id, isInitial: true }));
   }, []);
 
 
@@ -116,7 +121,7 @@ export default function GamePage() {
     pendingExamUpdateRef,
     currentExamResultInfo, setCurrentExamResultInfo,
     setCurrentIkuseiRound,
-    initialDeckCardIds,
+    rawInitialDeckCardsData.map(c => c.id), // shikenLogic にはIDの配列を渡す
     setItemUseResultMessage,
     setShowItemUseResultModal
   );
@@ -136,7 +141,6 @@ export default function GamePage() {
         console.warn("Card not selected or hand/cardData not available.");
         return;
     }
-
     const cardInstance = currentHand.find(c => c.instanceId === selectedExamCardInstanceId);
     if (!cardInstance) {
         console.warn("Selected card instance not found in hand.");
@@ -147,9 +151,8 @@ export default function GamePage() {
         console.warn("Card data not found for selected card.");
         return;
     }
-
     let targetNameToPass = null;
-    if (cardData.targetType === TARGET_TYPE.SINGLE) { // ここで TARGET_TYPE が解決されるはず
+    if (cardData.targetType === TARGET_TYPE.SINGLE) {
       if (!selectedExamExaminerName) {
         alert("単体対象カードです。対象の試験官を選択してください。");
         console.warn("単体対象カードですが、試験官が選択されていません。");
@@ -157,7 +160,6 @@ export default function GamePage() {
       }
       targetNameToPass = selectedExamExaminerName;
     }
-
     originalShikenHandleCardPlay(selectedExamCardInstanceId, targetNameToPass);
   }, [selectedExamCardInstanceId, selectedExamExaminerName, currentHand, originalShikenHandleCardPlay]);
 
@@ -183,7 +185,6 @@ export default function GamePage() {
     }
   }, [currentHand, lastRoundResult, gameState, selectedExamCardInstanceId]);
 
-
   const handleConfirmForcedExamTransition = useCallback(() => {
     if (gameState !== '育成' || !playerState) return;
     resetIkuseiStateForExam();
@@ -201,6 +202,41 @@ export default function GamePage() {
     setGameState('試験');
   }, [preparePlayerForExam, setGameState]);
 
+  // ★ DeckViewerModal 用のカードリスト生成ロジック
+  const deckCardsForModal = useMemo(() => {
+    if (!playerState) return [];
+    if (gameState === '育成' || gameState === 'ITEM_USE_BEFORE_EXAM') { // 育成中またはアイテム使用前
+      const additional = playerState.additionalDeck || [];
+      return [...additional, ...initialDeckCardInstances]; // isInitial フラグがついた初期カード
+    } else if (gameState === '試験') {
+      const fullDeck = playerState.currentExamFullDeck || [];
+      const usedIds = playerState.usedAdditionalCardsThisExam || [];
+      return fullDeck.filter(cardInst => {
+        if (cardInst.isInitial) return true; // 初期カードは常に山札にあるとみなす（手札に来る可能性）
+        return !usedIds.includes(cardInst.instanceId);
+      });
+    }
+    return [];
+  }, [playerState, gameState, initialDeckCardInstances]);
+
+  const usedCardsForModal = useMemo(() => {
+    if (!playerState || gameState !== '試験') return []; // 試験中のみ
+    const usedInstances = playerState.usedAdditionalCardsThisExam || [];
+    // usedAdditionalCardsThisExam は instanceId の配列なので、
+    // currentExamFullDeck から該当するインスタンスを探して返す
+    return (playerState.currentExamFullDeck || []).filter(cardInst =>
+        usedInstances.includes(cardInst.instanceId) && !cardInst.isInitial // 初期カードは使用済みに含めない
+    );
+  }, [playerState, gameState]);
+
+  const handleOpenDeckViewer = useCallback(() => {
+    setShowDeckViewerModal(true);
+  }, []);
+
+  const handleCloseDeckViewer = useCallback(() => {
+    setShowDeckViewerModal(false);
+  }, []);
+
 
   if (gameState === 'LOADING' || !playerState) {
     return <div style={{ padding: '20px', fontSize: '1.5em' }}>ゲームをロード中... (State: {gameState})</div>;
@@ -216,7 +252,8 @@ export default function GamePage() {
       </div>
       <h1 style={{textAlign: 'center', marginBottom: '20px'}}>研究者育成ゲーム</h1>
 
-      <PlayerStatusDisplay playerState={playerState} />
+      {/* ★ PlayerStatusDisplay に onOpenDeckViewer を渡す */}
+      <PlayerStatusDisplay playerState={playerState} onOpenDeckViewer={handleOpenDeckViewer} />
       {playerState.selectedMentors.length > 0 && <MentorInfoDisplay mentors={playerState.selectedMentors} />}
 
       {gameState === '育成' && (
@@ -280,6 +317,15 @@ export default function GamePage() {
         </div>
       )}
       {showItemUseResultModal && ( <ItemUseResultModal message={itemUseResultMessage} onClose={closeItemUseResultModal} /> )}
+
+      {/* ★ DeckViewerModal のレンダリング */}
+      <DeckViewerModal
+        isOpen={showDeckViewerModal}
+        onClose={handleCloseDeckViewer}
+        deckCards={deckCardsForModal}
+        usedCards={usedCardsForModal}
+        initialTab="deck" // デフォルトで山札タブを開く
+      />
     </div>
   );
 }
