@@ -4,11 +4,15 @@ import { allAbilityCards } from '../utils/cardUtils'; // カード詳細情報�
 
 const DeckViewerModal = ({ isOpen, onClose, deckCards = [], usedCards = [], initialTab = "deck" }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [hoveredCard, setHoveredCard] = useState(null); // ホバー中のカードデータ
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0, visible: false }); // ツールチップの位置と表示状態
 
   useEffect(() => {
-    // モーダルが開かれたときに初期タブを設定
+    // モーダルが開かれたときに初期タブを設定し、ホバー情報をリセット
     if (isOpen) {
       setActiveTab(initialTab);
+      setHoveredCard(null);
+      setTooltipPosition({ top: 0, left: 0, visible: false });
     }
   }, [isOpen, initialTab]);
 
@@ -23,13 +27,45 @@ const DeckViewerModal = ({ isOpen, onClose, deckCards = [], usedCards = [], init
     return allAbilityCards.get(cardInstance.baseId);
   };
 
+  const handleMouseEnterCard = (cardData, event) => {
+    setHoveredCard(cardData);
+    // マウスカーソル位置を基準にツールチップ位置を調整
+    const tooltipOffsetX = 15;
+    const tooltipOffsetY = 10;
+    let left = event.clientX + tooltipOffsetX;
+    let top = event.clientY + tooltipOffsetY;
+
+    // ツールチップが画面外に出ないように簡易的な調整
+    // (より洗練されたライブラリなどでは自動的に行われる)
+    const tooltipMockWidth = 300; // ツールチップの想定されるおおよその幅
+    const tooltipMockHeight = 150; // ツールチップの想定されるおおよその高さ
+
+    if (left + tooltipMockWidth > window.innerWidth) {
+      left = event.clientX - tooltipMockWidth - tooltipOffsetX; // 右側にはみ出るなら左側に表示
+    }
+    if (top + tooltipMockHeight > window.innerHeight) {
+      top = event.clientY - tooltipMockHeight - tooltipOffsetY; // 下側にはみ出るなら上側に表示
+    }
+    // 念のため画面左端、上端もチェック
+    if (left < 0) left = tooltipOffsetX;
+    if (top < 0) top = tooltipOffsetY;
+
+
+    setTooltipPosition({ top, left, visible: true });
+  };
+
+  const handleMouseLeaveCard = () => {
+    setHoveredCard(null);
+    setTooltipPosition({ top: 0, left: 0, visible: false });
+  };
+
   return (
-    <div style={{
+    <div style={{ // オーバーレイ
       position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
       backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex',
-      justifyContent: 'center', alignItems: 'center', zIndex: 2005 // 他のモーダルより手前に
+      justifyContent: 'center', alignItems: 'center', zIndex: 2005
     }}>
-      <div style={{
+      <div style={{ // モーダル本体
         backgroundColor: 'white', padding: '20px', borderRadius: '8px',
         width: '80%', maxWidth: '600px', maxHeight: '90vh',
         display: 'flex', flexDirection: 'column', boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
@@ -66,7 +102,7 @@ const DeckViewerModal = ({ isOpen, onClose, deckCards = [], usedCards = [], init
           </button>
         </div>
 
-        <div style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '10px' /* スクロールバーのため */ }}>
+        <div style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '10px' }}>
           {cardsToDisplay.length === 0 ? (
             <p>{activeTab === "deck" ? "山札にカードがありません。" : "使用済みカードはありません。"}</p>
           ) : (
@@ -77,25 +113,45 @@ const DeckViewerModal = ({ isOpen, onClose, deckCards = [], usedCards = [], init
               }
               return (
                 <div
-                  key={cardInstance.instanceId || cardData.id + `-${index}`} // instanceIdがない場合(初期カードなど)も考慮
-                  title={cardData.description} // ★ カーソルホバーで説明表示
+                  key={cardInstance.instanceId || cardData.id + `-${index}`}
                   style={{
                     border: '1px solid #ddd', padding: '10px', margin: '5px 0',
-                    borderRadius: '4px', backgroundColor: cardInstance.isInitial ? '#f9f9f9' : '#fff'
+                    borderRadius: '4px', backgroundColor: cardInstance.isInitial ? '#f9f9f9' : '#fff',
+                    cursor: 'default'
                   }}
+                  onMouseEnter={(e) => handleMouseEnterCard(cardData, e)}
+                  onMouseLeave={handleMouseLeaveCard}
                 >
                   <strong>{cardData.name}</strong> ({cardData.rarity})
                   {cardInstance.isInitial && <small style={{ color: 'gray', marginLeft: '10px' }}>(初期カード)</small>}
-                  <p style={{ fontSize: '0.85em', margin: '5px 0 0 0', whiteSpace: 'pre-wrap' }}>
-                    {/* ツールチップで表示するので、ここでは省略しても良い */}
-                    {/* {cardData.description} */}
-                  </p>
                 </div>
               );
             })
           )}
         </div>
       </div>
+
+      {/* ツールチップ表示部分 */}
+      {tooltipPosition.visible && hoveredCard && (
+        <div style={{
+          position: 'fixed',
+          top: `${tooltipPosition.top}px`,
+          left: `${tooltipPosition.left}px`,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          color: 'white',
+          padding: '10px 15px',
+          borderRadius: '6px',
+          zIndex: 2010,
+          maxWidth: '300px',
+          pointerEvents: 'none',
+          fontSize: '1.1em',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+          whiteSpace: 'pre-wrap'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2em', borderBottom: '1px solid #555', paddingBottom: '5px' }}>{hoveredCard.name}</h4>
+          <p style={{ margin: 0, fontSize: '1em' }}>{hoveredCard.description}</p>
+        </div>
+      )}
     </div>
   );
 };
