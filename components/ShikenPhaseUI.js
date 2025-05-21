@@ -1,56 +1,87 @@
 // components/ShikenPhaseUI.js
-import React from 'react';
+import React, { useMemo } from 'react';
 import ExaminerDisplay from './ExaminerDisplay';
 import HandDisplay from './HandDisplay';
 import { allAbilityCards } from '../utils/cardUtils';
-// EXAM_SETTINGS は currentExamSettings prop として親から渡されるので、ここでは直接インポート不要
+import { TARGET_TYPE } from '../data/abilityCards';
 
 const ShikenPhaseUI = ({
     playerState, examiners, currentExamSettings, currentExamRound, hand,
-    onExaminerSelect,     // 親から受け取る: 試験官が選択されたときのコールバック
-    onCardSelect,         // 親から受け取る: カードが選択されたときのコールバック
-    onPlayCard,           // 親から受け取る: 「カードを使用する」ボタンが押されたときのコールバック
+    onExaminerSelect,
+    onCardSelect,
+    onPlayCard,
     currentExamScore,
     lastRoundResultData,
     onProceedFromRoundResult,
-    selectedCardInstanceId, // 親から受け取る: 選択中のカードのインスタンスID
-    selectedExaminerName,   // 親から受け取る: 選択中の試験官の名前
-    tutorialControl         // チュートリアルモードでのみ渡される
+    selectedCardInstanceId,
+    selectedExaminerName,
+    tutorialControl
 }) => {
 
   const isTutorialMode = !!tutorialControl;
   const currentTargetElementId = isTutorialMode ? tutorialControl.targetElementId : null;
 
-  // 選択状態は親コンポーネント(game.js or tutorial.js)からpropsで渡される
   const finalSelectedCardInstanceId = selectedCardInstanceId;
   const finalSelectedExaminerName = selectedExaminerName;
 
-  const canPlayCard = finalSelectedCardInstanceId && finalSelectedExaminerName && !lastRoundResultData;
+  const selectedCardData = useMemo(() => {
+    if (!finalSelectedCardInstanceId || !hand || !allAbilityCards) return null;
+    const cardInst = hand.find(c => c.instanceId === finalSelectedCardInstanceId);
+    return cardInst ? allAbilityCards.get(cardInst.baseId) : null;
+  }, [finalSelectedCardInstanceId, hand]);
+
+
+  const canPlayCard = finalSelectedCardInstanceId && selectedCardData &&
+                      (selectedCardData.targetType === TARGET_TYPE.PLAYER_SELF ||
+                       selectedCardData.targetType === TARGET_TYPE.ALL ||
+                       selectedCardData.targetType === TARGET_TYPE.RANDOM_TWO ||
+                       finalSelectedExaminerName) &&
+                      !lastRoundResultData;
+
 
   const getSelectedCardName = () => {
-    if (!finalSelectedCardInstanceId || !hand) return "";
-    const cardInst = hand.find(c => c.instanceId === finalSelectedCardInstanceId);
-    return cardInst && allAbilityCards ? allAbilityCards.get(cardInst.baseId)?.name : "";
+    return selectedCardData ? selectedCardData.name : "";
   };
 
   const isNormaAchievedInUI = currentExamSettings && currentExamScore >= currentExamSettings.normaScore;
 
   if (lastRoundResultData) {
+    let resultMessage = `使用カード: 「${lastRoundResultData.playedCardName}」 (対象: ${lastRoundResultData.targetDescription})\n`;
+    if (lastRoundResultData.targetDescription !== "自分") {
+        resultMessage += `このカードでの総獲得スコア: ${lastRoundResultData.totalScoreGainedThisPlay}\n\n`;
+    }
+
+    if (lastRoundResultData.effects && lastRoundResultData.effects.length > 0) {
+      lastRoundResultData.effects.forEach(effect => {
+        resultMessage += `--- ${effect.examinerName} ---\n`;
+        let baseEvalLine = `  基本評価: ${effect.baseEvaluationBeforePreferred}`;
+        if(effect.referredStatusUsed && effect.referredStatusUsed !== selectedCardData?.referredStatus && selectedCardData?.referredStatus === "random"){
+            baseEvalLine += ` (参照ステータス: ${effect.referredStatusUsed})`;
+        }
+        resultMessage += baseEvalLine + `\n`;
+
+        if (effect.preferredStatusBonusApplied) {
+            // preferredStatusMultiplierUsed は initialGameState で 2.0 に固定されている
+            resultMessage += `  得意ステータスボーナス: x${effect.preferredStatusMultiplierUsed.toFixed(1)} → 評価 ${effect.finalBaseEvaluation}\n`;
+        }
+
+        resultMessage += `  試験官倍率: x${effect.examinerBaseMultiplier}, 使用回数(${effect.satisfactionCountForThisPlay}回目)補正: x${effect.satisfactionCountMultiplier}\n`;
+        resultMessage += `  獲得スコア(この試験官から): ${effect.scoreGainedThisTarget}\n`;
+      });
+    } else if (lastRoundResultData.targetDescription === "自分") {
+        resultMessage += `自己強化カードを使用しました。\n`;
+    } else if (lastRoundResultData.targetDescription && lastRoundResultData.targetDescription !== "自分") {
+        resultMessage += `効果対象がいませんでした。\n`
+    }
+
+
     return (
       <div style={{ border: '1px solid purple', padding: '15px', margin: '10px 0', textAlign: 'center' }}>
-        <h2>ラウンド {currentExamRound +1} の結果</h2> {/* currentExamRoundはカード使用前のラウンド */}
-        <p>使用カード: 「{lastRoundResultData.playedCardName}」 (対象: {lastRoundResultData.targetExaminerName})</p>
-        <div style={{ margin: '10px 0', padding: '10px', border: '1px solid #eee', maxHeight: '200px', overflowY: 'auto' }}>
-            {lastRoundResultData.examinerResults && lastRoundResultData.examinerResults.length > 0 ? lastRoundResultData.examinerResults.map(res => (
-                <p key={res.name} style={{margin: '5px 0'}}>
-                    <strong>{res.name}:</strong> 満足度 {res.oldSatisfaction.toFixed(1)} → {res.newSatisfaction.toFixed(1)}
-                    (<span style={{color: res.satisfactionIncrease >= 0 ? 'green' : 'red'}}>{res.satisfactionIncrease >= 0 ? '+' : ''}{res.satisfactionIncrease.toFixed(1)}</span>)
-                    {res.evaluationGained > 0 && <span style={{color: 'blue', marginLeft: '10px'}}>評価スコア +{res.evaluationGained}</span>}
-                </p>
-            )) : <p>特に満足度の変化はありませんでした。</p>}
+        <h2>ラウンド {currentExamRound +1} の結果</h2>
+        <div style={{ margin: '10px 0', padding: '10px', border: '1px solid #eee', whiteSpace: 'pre-wrap' }}>
+            {resultMessage}
         </div>
-        <p style={{fontWeight: 'bold'}}>このターンで得た総評価スコア: {lastRoundResultData.totalEvaluationGainedThisTurn}</p>
-        <p style={{fontWeight: 'bold'}}>現在の試験スコア: {currentExamScore}</p> {/* 更新後のスコア */}
+        <p style={{fontWeight: 'bold'}}>現在の試験スコア: {lastRoundResultData.newTotalExamScore} / ノルマ: {currentExamSettings?.normaScore || 'N/A'}</p>
         <button onClick={onProceedFromRoundResult} style={{padding: '10px 20px', fontSize: '1.1em', backgroundColor: 'teal', color: 'white', marginTop: '15px', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>次へ</button>
       </div>
     );
@@ -64,17 +95,24 @@ const ShikenPhaseUI = ({
 
       <h4>試験官 (クリックで対象を選択)</h4>
       <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap' }}>
-        {examiners && examiners.map(ex => { // examiners の存在をチェック
+        {examiners && examiners.map(ex => {
           const examinerDisplayId = `examiner_display_${ex.name}`;
-          const isDisabledByTutorial = isTutorialMode && currentTargetElementId && currentTargetElementId !== examinerDisplayId && !finalSelectedExaminerName;
+          const isDisabledByTutorial = isTutorialMode && currentTargetElementId && currentTargetElementId !== examinerDisplayId &&
+                                      !(selectedCardData?.targetType === TARGET_TYPE.ALL || selectedCardData?.targetType === TARGET_TYPE.RANDOM_TWO || selectedCardData?.targetType === TARGET_TYPE.PLAYER_SELF) &&
+                                      !finalSelectedExaminerName;
+          const disableSelection = selectedCardData &&
+                                   (selectedCardData.targetType === TARGET_TYPE.ALL ||
+                                    selectedCardData.targetType === TARGET_TYPE.RANDOM_TWO ||
+                                    selectedCardData.targetType === TARGET_TYPE.PLAYER_SELF);
+
           return (
             <ExaminerDisplay
               key={ex.name}
               examiner={ex}
-              isSelected={finalSelectedExaminerName === ex.name}
-              onSelect={() => onExaminerSelect(ex.name)}
+              isSelected={finalSelectedExaminerName === ex.name && !disableSelection}
+              onSelect={disableSelection ? undefined : () => onExaminerSelect(ex.name)}
               idForTutorial={examinerDisplayId}
-              isDisabledByTutorial={isDisabledByTutorial}
+              isDisabledByTutorial={isDisabledByTutorial || disableSelection}
               showPreferredStatus={true}
             />
           );
@@ -82,15 +120,15 @@ const ShikenPhaseUI = ({
       </div>
 
       <HandDisplay
-        hand={hand || []} // hand が undefined の場合のフォールバック
+        hand={hand || []}
         selectedCardInstanceId={finalSelectedCardInstanceId}
-        onCardSelect={onCardSelect} // ★ 親から渡された onCardSelect を HandDisplay に渡す
+        onCardSelect={onCardSelect}
         disabled={lastRoundResultData !== null}
         tutorialControl={isTutorialMode ? { targetElementId: currentTargetElementId } : null}
       />
 
       {finalSelectedCardInstanceId && <p style={{marginTop: '10px', textAlign:'center'}}>選択中カード: {getSelectedCardName()}</p>}
-      {finalSelectedExaminerName && <p style={{textAlign:'center'}}>対象試験官: {finalSelectedExaminerName}</p>}
+      {finalSelectedExaminerName && selectedCardData && selectedCardData.targetType === TARGET_TYPE.SINGLE && <p style={{textAlign:'center'}}>対象試験官: {finalSelectedExaminerName}</p>}
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
         {(() => {
@@ -101,7 +139,7 @@ const ShikenPhaseUI = ({
             return (
                 <button
                     id={playButtonId}
-                    onClick={onPlayCard} // 親から渡された onPlayCard を使用
+                    onClick={onPlayCard}
                     disabled={!finalCanPlay || isPlayButtonDisabledByTutorial}
                     style={{
                         padding: '10px 20px', fontSize: '1.1em',

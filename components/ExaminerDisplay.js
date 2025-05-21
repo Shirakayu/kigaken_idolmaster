@@ -1,6 +1,5 @@
 // components/ExaminerDisplay.js
 import React from 'react';
-import { EXAM_SETTINGS } from '../data/initialGameState';
 
 const ExaminerDisplay = ({
     examiner, isSelected, onSelect, showPreferredStatus = true,
@@ -23,11 +22,16 @@ const ExaminerDisplay = ({
             pointerEvents: isDisabledByTutorial ? 'none' : 'auto',
         }}
         onClick={(onSelect && !isDisabledByTutorial) ? () => onSelect(examiner.name) : undefined}
-        // className={isDisabledByTutorial ? 'tutorial-disabled' : ''} // CSSクラスで制御する場合
     >
         <h4>{examiner.name}</h4>
-        <p>満足度: {examiner.satisfaction.toFixed(1)} / {examiner.maxSatisfaction?.toFixed(1) ?? (EXAM_SETTINGS[0]?.maxSatisfactionPerExaminer?.toFixed(1) || 'N/A')}</p>
-        {showPreferredStatus && <p>評価されやすいステータス: {examiner.preferredStatus} (効果x{examiner.preferredStatusMultiplier})</p>}
+        <p>使用回数: {examiner.satisfactionCount !== undefined ? examiner.satisfactionCount : 'N/A'}</p>
+        {showPreferredStatus && examiner.preferredStatus && (
+            <p>
+                評価されやすいステータス: {examiner.preferredStatus}
+                {/* ★ preferredStatusMultiplier が存在し、かつ0より大きい場合のみ表示 */}
+                {examiner.preferredStatusMultiplier && examiner.preferredStatusMultiplier > 0 ? ` (効果x${examiner.preferredStatusMultiplier.toFixed(1)})` : ''}
+            </p>
+        )}
     </div>
 );
 

@@ -20,8 +20,10 @@ import { useShikenLogic } from '../hooks/useShikenLogic';
 
 import {
     allAbilityCards,
-    useCardPoolsByRarity,
+    useCardPoolsByRarity
+    // TARGET_TYPE // utils/cardUtils.js からのインポートをやめる
 } from '../utils/cardUtils';
+import { TARGET_TYPE } from '../data/abilityCards'; // ★ data/abilityCards.js から直接インポート
 
 
 // --- Main Game Component ---
@@ -45,7 +47,6 @@ export default function GamePage() {
     initializeGame,
   } = useGameInitialization();
 
-  // 試験フェイズでのカード選択と試験官選択のためのstate
   const [selectedExamCardInstanceId, setSelectedExamCardInstanceId] = useState(null);
   const [selectedExamExaminerName, setSelectedExamExaminerName] = useState(null);
 
@@ -125,32 +126,52 @@ export default function GamePage() {
     handleCardPlay: originalShikenHandleCardPlay,
     proceedToNextExamRoundOrEndExam,
     handleProceedFromExamResult,
-    handleItemUse, // ★ これを ItemUsePhaseUI に渡す
+    handleItemUse,
     closeItemUseResultModal,
     skipItemUseAndProceedToExam,
   } = shikenLogic;
 
-  // 試験フェイズのカードプレイ実行ハンドラ
   const executeExamCardPlay = useCallback(() => {
-    if (selectedExamCardInstanceId && selectedExamExaminerName) {
-      originalShikenHandleCardPlay(selectedExamCardInstanceId, selectedExamExaminerName);
-      // 選択のリセットは useEffect で行うか、shikenLogic内で行う
+    if (!selectedExamCardInstanceId || !currentHand || !allAbilityCards) {
+        console.warn("Card not selected or hand/cardData not available.");
+        return;
     }
-  }, [selectedExamCardInstanceId, selectedExamExaminerName, originalShikenHandleCardPlay]);
 
-  // 試験フェイズでカードが選択されたときのハンドラ
+    const cardInstance = currentHand.find(c => c.instanceId === selectedExamCardInstanceId);
+    if (!cardInstance) {
+        console.warn("Selected card instance not found in hand.");
+        return;
+    }
+    const cardData = allAbilityCards.get(cardInstance.baseId);
+    if (!cardData) {
+        console.warn("Card data not found for selected card.");
+        return;
+    }
+
+    let targetNameToPass = null;
+    if (cardData.targetType === TARGET_TYPE.SINGLE) { // ここで TARGET_TYPE が解決されるはず
+      if (!selectedExamExaminerName) {
+        alert("単体対象カードです。対象の試験官を選択してください。");
+        console.warn("単体対象カードですが、試験官が選択されていません。");
+        return;
+      }
+      targetNameToPass = selectedExamExaminerName;
+    }
+
+    originalShikenHandleCardPlay(selectedExamCardInstanceId, targetNameToPass);
+  }, [selectedExamCardInstanceId, selectedExamExaminerName, currentHand, originalShikenHandleCardPlay]);
+
+
   const handleExamCardSelect = useCallback((instanceId) => {
     if (lastRoundResult) return;
     setSelectedExamCardInstanceId(instanceId);
   }, [lastRoundResult]);
 
-  // 試験フェイズで試験官が選択されたときのハンドラ
   const handleExamExaminerSelect = useCallback((examinerName) => {
     if (lastRoundResult) return;
     setSelectedExamExaminerName(examinerName);
   }, [lastRoundResult]);
 
-  // 手札更新時やラウンド結果表示時に選択をリセット
   useEffect(() => {
     if (gameState === '試験') {
       if (lastRoundResult) {
@@ -217,7 +238,6 @@ export default function GamePage() {
           eventResult={eventResultInfo}
           onCloseEvent={closeEvent}
           setIkuseiPhaseStep={isEventActive ? setEventUiStep : setIkuseiPhaseStep}
-          // tutorialControl は渡さない (通常プレイのため)
         />
       )}
 
@@ -225,10 +245,8 @@ export default function GamePage() {
         <ItemUsePhaseUI
             playerState={playerState}
             examiners={examiners}
-            onItemUse={handleItemUse} // ★ useShikenLogic から取得した handleItemUse を渡す
+            onItemUse={handleItemUse}
             onSkipItemUse={() => skipItemUseAndProceedToExam(proceedToExamPhase)}
-            // チュートリアル用の onItemSelect, onExaminerSelect, onConfirmItemUse,
-            // selectedItemId, selectedExaminerName, tutorialControl は渡さない
         />
       )}
       {gameState === '試験' && playerState && EXAM_SETTINGS[playerState.currentExamIndex] && !currentExamResultInfo && (
@@ -246,7 +264,6 @@ export default function GamePage() {
             onProceedFromRoundResult={proceedToNextExamRoundOrEndExam}
             selectedCardInstanceId={selectedExamCardInstanceId}
             selectedExaminerName={selectedExamExaminerName}
-            // tutorialControl は渡さない
         />
       )}
       {gameState === 'EXAM_RESULT_DISPLAY' && currentExamResultInfo && (

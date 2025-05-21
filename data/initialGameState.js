@@ -6,34 +6,25 @@ export const EXAMINER_NAMES = ['教授', '講師', 'ポスドク'];
 export const EXAM_SETTINGS = [
   {
     roundLimit: 7,
-    normaScore: 50,
+    normaScore: 300,
     name: "第1回中間報告会",
     roundLimitBeforeExam: 5,
-    maxSatisfactionPerExaminer: 90
   },
   {
     roundLimit: 7,
-    normaScore: 75,
+    normaScore: 500,
     name: "第2回中間報告会",
     roundLimitBeforeExam: 5,
-    maxSatisfactionPerExaminer: 120
   },
   {
     roundLimit: 9,
-    normaScore: 100,
+    normaScore: 800,
     name: "最終研究発表会",
     roundLimitBeforeExam: 7,
-    maxSatisfactionPerExaminer: 150
   },
 ];
 
 export const TOTAL_EXAMS = EXAM_SETTINGS.length;
-
-export const EXAMINER_EVALUATION_WEIGHT = {
-  '教授': { base: 1, satisfactionThresholds: { 33: 10, 66: 20, 100: 40 } },
-  '講師': { base: 1, satisfactionThresholds: { 33: 8, 66: 15, 100: 30 } },
-  'ポスドク': { base: 1, satisfactionThresholds: { 33: 5, 66: 10, 100: 20 } },
-};
 
 export const getInitialPlayerState = () => ({
   stats: {
@@ -45,7 +36,7 @@ export const getInitialPlayerState = () => ({
   currentExamFullDeck: [],
   usedAdditionalCardsThisExam: [],
   inventory: {
-    traitChangeItems: [], // 形式: [{ id: 'trait_change_vivo', instanceId: 'item_instance_123' }, ...]
+    traitChangeItems: [],
   },
   selectedMentors: [],
   currentExamIndex: 0,
@@ -53,12 +44,15 @@ export const getInitialPlayerState = () => ({
 });
 
 export const getInitialExaminerState = () => {
-  return EXAMINER_NAMES.map(name => ({
-    name: name,
-    satisfaction: 0,
-    preferredStatus: STATUS_TYPE.IN_VIVO, // 初期値、試験開始時にランダム設定される
-    preferredStatusMultiplier: 2, // 初期値、試験開始時にランダム設定される可能性あり
-    achievedEvaluationMilestones: {}, // 例: { '33': true, '66': false, '100': false }
-    // maxSatisfaction は試験開始時に EXAM_SETTINGS から動的に設定
-  }));
+  return EXAMINER_NAMES.map(name => {
+    const basicPlayableStatuses = [ STATUS_TYPE.IN_VIVO, STATUS_TYPE.IN_VITRO, STATUS_TYPE.IN_SILICO ];
+    const randomStatus = basicPlayableStatuses[Math.floor(Math.random() * basicPlayableStatuses.length)];
+
+    return {
+      name: name,
+      satisfactionCount: 0,
+      preferredStatus: randomStatus,
+      preferredStatusMultiplier: 2.0, // ★ 一律 2.0 に固定
+    };
+  });
 };
