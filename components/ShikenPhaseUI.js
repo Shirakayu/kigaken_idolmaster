@@ -46,39 +46,35 @@ const ShikenPhaseUI = ({
   const isNormaAchievedInUI = currentExamSettings && currentExamScore >= currentExamSettings.normaScore;
 
   if (lastRoundResultData) {
-    let resultMessage = `使用カード: 「${lastRoundResultData.playedCardName}」 (対象: ${lastRoundResultData.targetDescription})\n`;
-    if (lastRoundResultData.targetDescription !== "自分") {
-        resultMessage += `このカードでの総獲得スコア: ${lastRoundResultData.totalScoreGainedThisPlay}\n\n`;
-    }
+    const maxAttentionForDisplay = 5;
+    // ★ 変更点: カード名と対象の後に改行を追加
+    let resultMessage = `使用カード: 「${lastRoundResultData.playedCardName}」 (対象: ${lastRoundResultData.targetDescription})\n\n`; // ここに改行を一つ追加
 
     if (lastRoundResultData.effects && lastRoundResultData.effects.length > 0) {
-      lastRoundResultData.effects.forEach(effect => {
+      lastRoundResultData.effects.forEach((effect, index) => {
+        const attentionBefore = Math.max(0, maxAttentionForDisplay - (effect.satisfactionCountForThisPlay - 1));
+        const attentionAfter = Math.max(0, maxAttentionForDisplay - effect.satisfactionCountForThisPlay);
+
         resultMessage += `--- ${effect.examinerName} ---\n`;
-        let baseEvalLine = `  基本評価: ${effect.baseEvaluationBeforePreferred}`;
-        if(effect.referredStatusUsed && effect.referredStatusUsed !== selectedCardData?.referredStatus && selectedCardData?.referredStatus === "random"){
-            baseEvalLine += ` (参照ステータス: ${effect.referredStatusUsed})`;
+        resultMessage += `  注目度: ${attentionBefore} → ${attentionAfter}\n`;
+        resultMessage += `  獲得スコア: ${effect.scoreGainedThisTarget}\n`;
+        if (index < lastRoundResultData.effects.length - 1) {
+            resultMessage += `\n`;
         }
-        resultMessage += baseEvalLine + `\n`;
-
-        if (effect.preferredStatusBonusApplied) {
-            // preferredStatusMultiplierUsed は initialGameState で 2.0 に固定されている
-            resultMessage += `  得意ステータスボーナス: x${effect.preferredStatusMultiplierUsed.toFixed(1)} → 評価 ${effect.finalBaseEvaluation}\n`;
-        }
-
-        resultMessage += `  試験官倍率: x${effect.examinerBaseMultiplier}, 使用回数(${effect.satisfactionCountForThisPlay}回目)補正: x${effect.satisfactionCountMultiplier}\n`;
-        resultMessage += `  獲得スコア(この試験官から): ${effect.scoreGainedThisTarget}\n`;
       });
+      resultMessage += `\nこのカードでの総獲得スコア: ${lastRoundResultData.totalScoreGainedThisPlay}\n`;
+
     } else if (lastRoundResultData.targetDescription === "自分") {
         resultMessage += `自己強化カードを使用しました。\n`;
     } else if (lastRoundResultData.targetDescription && lastRoundResultData.targetDescription !== "自分") {
-        resultMessage += `効果対象がいませんでした。\n`
+        resultMessage += `効果対象がいませんでした。\n`;
     }
 
 
     return (
       <div style={{ border: '1px solid purple', padding: '15px', margin: '10px 0', textAlign: 'center' }}>
         <h2>ラウンド {currentExamRound +1} の結果</h2>
-        <div style={{ margin: '10px 0', padding: '10px', border: '1px solid #eee', whiteSpace: 'pre-wrap' }}>
+        <div style={{ margin: '10px 0', padding: '10px', border: '1px solid #eee', whiteSpace: 'pre-wrap', textAlign: 'left' }}>
             {resultMessage}
         </div>
         <p style={{fontWeight: 'bold'}}>現在の試験スコア: {lastRoundResultData.newTotalExamScore} / ノルマ: {currentExamSettings?.normaScore || 'N/A'}</p>

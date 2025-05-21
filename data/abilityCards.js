@@ -28,37 +28,7 @@ export const STATUS_TYPE = {
 export const initialDeckCards = [
   // 既存の初期カードはIDや効果を新しいものに合わせるか、新しいカードで完全に置き換え。
   // ここでは新しい定義に合わせて一部調整。
-  {
-    id: 'initial_basic_vivo', // 旧 initial_vivo
-    name: '基礎実験操作 (Vivo)',
-    rarity: RARITY.INITIAL,
-    description: '対象1人の満足度を『in vivo』×1 上昇',
-    targetType: TARGET_TYPE.SINGLE,
-    referredStatus: STATUS_TYPE.IN_VIVO,
-    effectMultiplier: 1,
-    isInitial: true,
-  },
-  {
-    id: 'initial_basic_vitro', // 旧 initial_vitro
-    name: '基礎実験操作 (Vitro)',
-    rarity: RARITY.INITIAL,
-    description: '対象1人の満足度を『in vitro』×1 上昇',
-    targetType: TARGET_TYPE.SINGLE,
-    referredStatus: STATUS_TYPE.IN_VITRO,
-    effectMultiplier: 1,
-    isInitial: true,
-  },
-  {
-    id: 'initial_basic_silico', // 旧 initial_silico
-    name: '基礎実験操作 (Silico)',
-    rarity: RARITY.INITIAL,
-    description: '対象1人の満足度を『in silico』×1 上昇',
-    targetType: TARGET_TYPE.SINGLE,
-    referredStatus: STATUS_TYPE.IN_SILICO,
-    effectMultiplier: 1,
-    isInitial: true,
-  },
-  // ★ 新しい初期カード
+  // 初期カード
   {
     id: 'initial_培地調製',
     name: '培地調製',
