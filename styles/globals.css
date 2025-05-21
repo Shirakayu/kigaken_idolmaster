@@ -1,12 +1,42 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* ゲーム内で使用する可能性のあるその他の色をCSS変数として定義（例） */
+  --primary-color: #007bff; /* メインのアクセントカラー（例：青） */
+  --secondary-color: #6c757d; /* サブカラー（例：グレー） */
+  --card-background: #ffffff;
+  --card-border: #eaeaea;
+  --button-background: var(--primary-color);
+  --button-text: white;
+  --button-hover-background: #0056b3;
+  --modal-background: #ffffff;
+  --modal-text: #171717;
+  --modal-header-background: #f8f9fa;
+  --input-background: #ffffff;
+  --input-border: #ced4da;
+  --input-text: #495057;
+
+  color-scheme: light dark; /* ★ ブラウザに両方のカラースキームをサポートさせる */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0a0a0a; /* より濃い黒に近い背景 */
+    --foreground: #ededed; /* 明るいグレーの文字 */
+    /* ダークモード時の色変数の上書き */
+    --primary-color: #0d6efd; /* ダークモードでも見やすい青 */
+    --secondary-color: #5c636a;
+    --card-background: #1e1e1e; /* カードの背景を暗く */
+    --card-border: #3a3a3a;    /* カードの境界線を少し明るく */
+    --button-background: var(--primary-color);
+    --button-text: white;
+    --button-hover-background: #0b5ed7;
+    --modal-background: #2c2c2c; /* モーダルの背景 */
+    --modal-text: #ededed;       /* モーダルの文字色 */
+    --modal-header-background: #343a40; /* モーダルヘッダーの背景 */
+    --input-background: #2c2c2c;
+    --input-border: #555;
+    --input-text: #ededed;
   }
 }
 
@@ -19,9 +49,10 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif; /* プロジェクトで指定しているフォントファミリに変更してください */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease; /* スムーズな色の変化（任意） */
 }
 
 * {
@@ -35,8 +66,118 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
+/*
+  旧 @media (prefers-color-scheme: dark) { html { color-scheme: dark; } } は
+  :root の color-scheme: light dark; でカバーされるため、重複を避けるためにコメントアウトまたは削除しても良いです。
+  ただし、特定の挙動を期待している場合は残すことも検討できますが、通常は :root への指定で十分です。
+*/
+/* @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
+  }
+} */
+
+
+/* ----- 以下、ゲーム内の主要UI要素に対するダークモード対応の例 ----- */
+/* これらは実際のHTML構造やクラス名に合わせて調整が必要です */
+
+/* 例: ShikenPhaseUI や IkuseiPhaseUI などの主要なコンテナの境界線 */
+@media (prefers-color-scheme: dark) {
+  div[style*="border: 1px solid lightblue"], /* IkuseiPhaseUI のようなもの */
+  div[style*="border: 1px solid salmon"],  /* ShikenPhaseUI のようなもの */
+  div[style*="border: 1px solid green"]    /* ItemUsePhaseUI のようなもの */
+  {
+    border-color: var(--card-border) !important; /* CSS変数を使い、!importantでインラインスタイルを上書き */
+  }
+
+  /* PlayerStatusDisplay, MentorInfoDisplay などのボーダー */
+  div[style*="border: 1px solid #eee"],
+  div[style*="border: 1px solid #e0e0e0"]
+  {
+    border-color: var(--card-border) !important;
+    background-color: var(--card-background) !important; /* 必要であれば背景色も */
+  }
+
+  /* ボタンの汎用的なスタイル（既存のボタンにも影響する可能性があるので注意） */
+  /* もしボタンに特定のクラスが付与されていれば、それに対して指定する方が安全 */
+  button {
+    background-color: var(--button-background);
+    color: var(--button-text);
+    border: 1px solid var(--card-border); /* ボタンの境界線も変数化 */
+    /* その他のボタンスタイル */
+  }
+  button:hover {
+    background-color: var(--button-hover-background);
+  }
+
+  /* ShikenPhaseUI などの結果表示の背景 */
+  div[style*="border: 1px solid #eee"][style*="white-space: pre-wrap"] {
+    background-color: var(--card-background) !important;
+    border-color: var(--card-border) !important;
+  }
+
+
+  /* DeckViewerModal のようなモーダルウィンドウのスタイル */
+  /* DeckViewerModal 内部のスタイルで直接CSS変数を参照するように変更するのがより望ましい */
+  /* ここでは簡易的にインラインスタイルを上書きする例 */
+  div[style*="backgroundColor: 'white'"][style*="flexDirection: 'column'"] { /* モーダル本体の仮特定 */
+    background-color: var(--modal-background) !important;
+    color: var(--modal-text) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important; /* ダークモード用の影 */
+  }
+  div[style*="justifyContent: 'space-between'"][style*="alignItems: 'center'"] > h3 { /* モーダルヘッダーのタイトル */
+    color: var(--modal-text) !important;
+  }
+  div[style*="justifyContent: 'space-between'"][style*="alignItems: 'center'"] > button { /* モーダル閉じるボタン */
+    color: var(--modal-text) !important;
+  }
+  div[style*="borderBottom: '1px solid #eee'"] { /* モーダルのタブ区切り線 */
+    border-bottom-color: var(--card-border) !important;
+  }
+  /* モーダルのタブボタン (アクティブ/非アクティブ) */
+  /* これは DeckViewerModal.js 側で動的にスタイルが変わるため、CSS変数を使うように修正するのが本筋 */
+
+
+  /* カード表示 (DeckViewerModal内など) */
+  div[style*="border: '1px solid #ddd'"][style*="backgroundColor: '#fff'"] { /* 通常カード */
+      background-color: var(--card-background) !important;
+      border-color: var(--card-border) !important;
+      color: var(--foreground) !important;
+  }
+  div[style*="border: '1px solid #ddd'"][style*="backgroundColor: '#f9f9f9'"] { /* 初期カードなど */
+      background-color: #2a2a2a !important; /* 少し明るいダーク背景 */
+      border-color: var(--card-border) !important;
+      color: var(--foreground) !important;
+  }
+  /* ホバーツールチップのスタイル */
+  /* これも DeckViewerModal.js 側でCSS変数を使うか、ここで上書き */
+  div[style*="backgroundColor: 'rgba(0, 0, 0, 0.85)'"][style*="zIndex: 2010"] {
+      background-color: rgba(230, 230, 230, 0.9) !important; /* 明るい背景に暗い文字 */
+      color: #171717 !important;
+      box-shadow: 0 2px 10px rgba(255,255,255,0.1) !important;
+  }
+  div[style*="zIndex: 2010"] > h4 {
+      color: #171717 !important;
+      border-bottom-color: #ccc !important;
+  }
+
+
+  /* ExaminerDisplay のようなカードスタイルの要素 */
+  div[style*="border: 2px solid"] { /* isSelected で色が変わるものも含む */
+    background-color: var(--card-background) !important;
+    border-color: var(--card-border) !important; /* 通常時の境界線 */
+  }
+  div[style*="border: 2px solid blue"] { /* 選択時の境界線 (ダークモード用に調整) */
+    border-color: var(--primary-color) !important;
+  }
+  div[style*="backgroundColor: '#e0f7fa'"] { /* 選択時の背景色 (ダークモード用に調整) */
+    background-color: #003f5c !important; /* 暗めの青系背景 */
+  }
+
+  /* タイトル戻るボタン (game.jsなど) */
+  a[style*="backgroundColor: '#f0f0f0'"] {
+      background-color: var(--secondary-color) !important;
+      color: var(--button-text) !important;
+      border-color: var(--card-border) !important;
   }
 }
