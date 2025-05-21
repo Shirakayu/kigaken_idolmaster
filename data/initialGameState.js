@@ -5,25 +5,25 @@ export const EXAMINER_NAMES = ['教授', '講師', 'ポスドク'];
 
 export const EXAM_SETTINGS = [
   {
-    roundLimit: 5,
+    roundLimit: 7,
     normaScore: 50,
     name: "第1回中間報告会",
-    roundLimitBeforeExam: 7,
-    maxSatisfactionPerExaminer: 75
+    roundLimitBeforeExam: 5,
+    maxSatisfactionPerExaminer: 90
   },
   {
-    roundLimit: 5,
+    roundLimit: 7,
     normaScore: 75,
     name: "第2回中間報告会",
-    roundLimitBeforeExam: 7,
-    maxSatisfactionPerExaminer: 100
+    roundLimitBeforeExam: 5,
+    maxSatisfactionPerExaminer: 120
   },
   {
-    roundLimit: 5,
+    roundLimit: 9,
     normaScore: 100,
     name: "最終研究発表会",
-    roundLimitBeforeExam: 9,
-    maxSatisfactionPerExaminer: 135
+    roundLimitBeforeExam: 7,
+    maxSatisfactionPerExaminer: 150
   },
 ];
 
