@@ -1,44 +1,38 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  /* ゲーム内で使用する可能性のあるその他の色をCSS変数として定義（例） */
-  --primary-color: #007bff; /* メインのアクセントカラー（例：青） */
-  --secondary-color: #6c757d; /* サブカラー（例：グレー） */
-  --card-background: #ffffff;
-  --card-border: #eaeaea;
-  --button-background: var(--primary-color);
-  --button-text: white;
-  --button-hover-background: #0056b3;
-  --modal-background: #ffffff;
-  --modal-text: #171717;
-  --modal-header-background: #f8f9fa;
-  --input-background: #ffffff;
-  --input-border: #ced4da;
-  --input-text: #495057;
+  /* ライトモードの基本色を定義 (これが強制的に使われる色になる) */
+  --game-background: #ffffff;
+  --game-foreground: #171717;
+  --game-primary-color: #007bff;
+  --game-secondary-color: #6c757d;
+  --game-card-background: #ffffff;
+  --game-card-border: #eaeaea;
+  --game-button-background: var(--game-primary-color);
+  --game-button-text: white;
+  --game-button-hover-background: #0056b3;
+  --game-modal-background: #ffffff;
+  --game-modal-text: #171717;
+  --game-modal-header-background: #f8f9fa;
+  --game-input-background: #ffffff;
+  --game-input-border: #ced4da;
+  --game-input-text: #495057;
 
-  color-scheme: light dark; /* ★ ブラウザに両方のカラースキームをサポートさせる */
+  /* color-scheme はブラウザのUI部品 (スクロールバー等) のために残しておいても良いが、
+     ゲーム本体の色はCSSで完全に制御するため、影響は限定的になる */
+  color-scheme: light dark;
 }
 
-@media (prefers-color-scheme: dark) {
+/*
+  ダークモード時でも、以下の :root 変数はライトモードの値が使われることになる。
+  もしブラウザのデフォルトUI（スクロールバーなど）だけダークモードに追従させたい場合は、
+  この @media ブロック内の :root の再定義は不要。
+  ゲーム本体の色は、後述の個別要素へのスタイル指定で強制する。
+*/
+/* @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a; /* より濃い黒に近い背景 */
-    --foreground: #ededed; /* 明るいグレーの文字 */
-    /* ダークモード時の色変数の上書き */
-    --primary-color: #0d6efd; /* ダークモードでも見やすい青 */
-    --secondary-color: #5c636a;
-    --card-background: #1e1e1e; /* カードの背景を暗く */
-    --card-border: #3a3a3a;    /* カードの境界線を少し明るく */
-    --button-background: var(--primary-color);
-    --button-text: white;
-    --button-hover-background: #0b5ed7;
-    --modal-background: #2c2c2c; /* モーダルの背景 */
-    --modal-text: #ededed;       /* モーダルの文字色 */
-    --modal-header-background: #343a40; /* モーダルヘッダーの背景 */
-    --input-background: #2c2c2c;
-    --input-border: #555;
-    --input-text: #ededed;
+    // --background: #0a0a0a; // 通常のダークモード対応ならこうするが、今回は強制ライトなのでコメントアウト
+    // --foreground: #ededed;
   }
-}
+} */
 
 html,
 body {
@@ -47,12 +41,14 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif; /* プロジェクトで指定しているフォントファミリに変更してください */
+  /* body自体はブラウザのダークモード設定に追従させても良いし、
+     ゲームに合わせてライトモード固定にしても良い。
+     ここではゲームに合わせてライトモード固定にする。 */
+  color: var(--game-foreground);
+  background: var(--game-background);
+  font-family: Arial, Helvetica, sans-serif; /* プロジェクトのフォントに合わせてください */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease; /* スムーズな色の変化（任意） */
 }
 
 * {
@@ -62,122 +58,158 @@ body {
 }
 
 a {
-  color: inherit;
+  color: inherit; /* 基本的に親要素の色を継承 */
   text-decoration: none;
 }
 
-/*
-  旧 @media (prefers-color-scheme: dark) { html { color-scheme: dark; } } は
-  :root の color-scheme: light dark; でカバーされるため、重複を避けるためにコメントアウトまたは削除しても良いです。
-  ただし、特定の挙動を期待している場合は残すことも検討できますが、通常は :root への指定で十分です。
-*/
-/* @media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-} */
-
-
-/* ----- 以下、ゲーム内の主要UI要素に対するダークモード対応の例 ----- */
-/* これらは実際のHTML構造やクラス名に合わせて調整が必要です */
-
-/* 例: ShikenPhaseUI や IkuseiPhaseUI などの主要なコンテナの境界線 */
+/* --- ダークモード設定時でも、ゲームの主要要素はライトモードの配色を強制 --- */
 @media (prefers-color-scheme: dark) {
-  div[style*="border: 1px solid lightblue"], /* IkuseiPhaseUI のようなもの */
-  div[style*="border: 1px solid salmon"],  /* ShikenPhaseUI のようなもの */
-  div[style*="border: 1px solid green"]    /* ItemUsePhaseUI のようなもの */
-  {
-    border-color: var(--card-border) !important; /* CSS変数を使い、!importantでインラインスタイルを上書き */
-  }
+  /*
+    ゲームのメインコンテナ (例: pages/game.js の一番外側の div)。
+    この要素に特定のIDやクラスを付与して指定するのが望ましい。
+    ここでは仮にインラインスタイルで `backgroundColor: 'white'` が設定されていると想定し、
+    それを維持、またはより明示的にライトモードの色を指定する。
+    もし body 全体をライトモード固定にしたければ、ここの指定は不要になる場合もある。
+  */
+  /* div[style*="maxWidth: '900px'"][style*="margin: 'auto'"] { // game.js のメインコンテナを仮特定
+    background-color: var(--game-background) !important;
+    color: var(--game-foreground) !important;
+  } */
 
-  /* PlayerStatusDisplay, MentorInfoDisplay などのボーダー */
+  /* 各UIコンポーネントのルート要素や、色が重要な要素に対して、
+     ライトモードのCSS変数を !important 付きで適用する */
+
+  /* PlayerStatusDisplay, MentorInfoDisplay などの情報表示エリア */
   div[style*="border: 1px solid #eee"],
-  div[style*="border: 1px solid #e0e0e0"]
-  {
-    border-color: var(--card-border) !important;
-    background-color: var(--card-background) !important; /* 必要であれば背景色も */
+  div[style*="border: 1px solid #e0e0e0"] {
+    background-color: var(--game-card-background) !important; /* 白背景を維持 */
+    color: var(--game-foreground) !important; /* 黒文字を維持 */
+    border-color: var(--game-card-border) !important; /* 明るい境界線を維持 */
   }
 
-  /* ボタンの汎用的なスタイル（既存のボタンにも影響する可能性があるので注意） */
-  /* もしボタンに特定のクラスが付与されていれば、それに対して指定する方が安全 */
+  /* IkuseiPhaseUI, ShikenPhaseUI, ItemUsePhaseUI のような主要コンテナの境界線 */
+  div[style*="border: 1px solid lightblue"],
+  div[style*="border: 1px solid salmon"],
+  div[style*="border: 1px solid green"] {
+    border-color: #add8e6 !important; /* lightblue を維持 (または var(--game-card-border) など) */
+    /* 背景や文字は親要素(bodyやメインコンテナ)から継承される想定 */
+  }
+  div[style*="border: 1px solid salmon"] {
+    border-color: #fa8072 !important; /* salmon を維持 */
+  }
+   div[style*="border: 1px solid green"] {
+    border-color: #008000 !important; /* green を維持 */
+  }
+
+
+  /* ボタン全般 (汎用的な指定 - クラス指定が望ましい) */
   button {
-    background-color: var(--button-background);
-    color: var(--button-text);
-    border: 1px solid var(--card-border); /* ボタンの境界線も変数化 */
-    /* その他のボタンスタイル */
+    background-color: var(--game-button-background) !important;
+    color: var(--game-button-text) !important;
+    border: 1px solid var(--game-card-border) !important; /* ボタンの境界線 */
   }
   button:hover {
-    background-color: var(--button-hover-background);
+    background-color: var(--game-button-hover-background) !important;
   }
+  /* 特定の色のボタンがあれば個別に指定 */
+  button[style*="backgroundColor: '#28a745'"] { /* 緑色の「はい」ボタン */
+      background-color: #28a745 !important;
+      color: white !important;
+  }
+  button[style*="backgroundColor: '#dc3545'"] { /* 赤色の「いいえ」ボタン */
+      background-color: #dc3545 !important;
+      color: white !important;
+  }
+   button[style*="backgroundColor: 'blue'"] { /* 青色の「カードを使用する」ボタン */
+      background-color: blue !important;
+      color: white !important;
+  }
+  button[style*="backgroundColor: 'teal'"] { /* ティール色の「次へ」ボタン */
+      background-color: teal !important;
+      color: white !important;
+  }
+  button[style*="backgroundColor: 'orange'"] { /* オレンジ色のボタン */
+    background-color: orange !important;
+    color: white !important;
+  }
+
 
   /* ShikenPhaseUI などの結果表示の背景 */
   div[style*="border: 1px solid #eee"][style*="white-space: pre-wrap"] {
-    background-color: var(--card-background) !important;
-    border-color: var(--card-border) !important;
+    background-color: var(--game-card-background) !important; /* 明るい背景 */
+    border-color: var(--game-card-border) !important; /* 明るい境界線 */
+    color: var(--game-foreground) !important; /* 暗い文字 */
+  }
+
+  /* DeckViewerModal のスタイル */
+  div[style*="backgroundColor: 'rgba(0, 0, 0, 0.5)"][style*="zIndex: 2005"] > div[style*="backgroundColor: 'white'"] { /* モーダル本体 */
+    background-color: var(--game-modal-background) !important;
+    color: var(--game-modal-text) !important;
+  }
+  div[style*="zIndex: 2005"] h3 { /* モーダルタイトル */
+    color: var(--game-modal-text) !important;
+  }
+  div[style*="zIndex: 2005"] button[style*="fontSize: '1.5rem'"] { /* モーダル閉じるボタン */
+     color: var(--game-modal-text) !important;
+  }
+  div[style*="zIndex: 2005"] div[style*="borderBottom: '1px solid #eee'"] { /* タブ区切り線 */
+    border-bottom-color: var(--game-card-border) !important;
+  }
+  /* モーダル内のタブボタン (DeckViewerModal.js側でCSS変数を参照するのがより良い) */
+  div[style*="zIndex: 2005"] button[style*="backgroundColor: '#007bff'"] { /* アクティブタブ */
+    background-color: var(--game-primary-color) !important;
+    color: var(--game-button-text) !important;
+  }
+  div[style*="zIndex: 2005"] button[style*="backgroundColor: '#f0f0f0'"] { /* 非アクティブタブ */
+    background-color: #f0f0f0 !important; /* ライトモードの非アクティブ色 */
+    color: black !important;
+    border-color: #ccc !important;
+  }
+  /* モーダル内のカード表示 */
+  div[style*="zIndex: 2005"] div[style*="border: '1px solid #ddd'"] {
+      background-color: var(--game-card-background) !important;
+      border-color: var(--game-card-border) !important;
+      color: var(--game-foreground) !important;
+  }
+   div[style*="zIndex: 2005"] div[style*="backgroundColor: '#f9f9f9'"] { /* 初期カードなど */
+      background-color: #f9f9f9 !important;
+      border-color: var(--game-card-border) !important;
+      color: var(--game-foreground) !important;
   }
 
 
-  /* DeckViewerModal のようなモーダルウィンドウのスタイル */
-  /* DeckViewerModal 内部のスタイルで直接CSS変数を参照するように変更するのがより望ましい */
-  /* ここでは簡易的にインラインスタイルを上書きする例 */
-  div[style*="backgroundColor: 'white'"][style*="flexDirection: 'column'"] { /* モーダル本体の仮特定 */
-    background-color: var(--modal-background) !important;
-    color: var(--modal-text) !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important; /* ダークモード用の影 */
-  }
-  div[style*="justifyContent: 'space-between'"][style*="alignItems: 'center'"] > h3 { /* モーダルヘッダーのタイトル */
-    color: var(--modal-text) !important;
-  }
-  div[style*="justifyContent: 'space-between'"][style*="alignItems: 'center'"] > button { /* モーダル閉じるボタン */
-    color: var(--modal-text) !important;
-  }
-  div[style*="borderBottom: '1px solid #eee'"] { /* モーダルのタブ区切り線 */
-    border-bottom-color: var(--card-border) !important;
-  }
-  /* モーダルのタブボタン (アクティブ/非アクティブ) */
-  /* これは DeckViewerModal.js 側で動的にスタイルが変わるため、CSS変数を使うように修正するのが本筋 */
-
-
-  /* カード表示 (DeckViewerModal内など) */
-  div[style*="border: '1px solid #ddd'"][style*="backgroundColor: '#fff'"] { /* 通常カード */
-      background-color: var(--card-background) !important;
-      border-color: var(--card-border) !important;
-      color: var(--foreground) !important;
-  }
-  div[style*="border: '1px solid #ddd'"][style*="backgroundColor: '#f9f9f9'"] { /* 初期カードなど */
-      background-color: #2a2a2a !important; /* 少し明るいダーク背景 */
-      border-color: var(--card-border) !important;
-      color: var(--foreground) !important;
-  }
-  /* ホバーツールチップのスタイル */
-  /* これも DeckViewerModal.js 側でCSS変数を使うか、ここで上書き */
+  /* ホバーツールチップ (DeckViewerModal内) */
   div[style*="backgroundColor: 'rgba(0, 0, 0, 0.85)'"][style*="zIndex: 2010"] {
-      background-color: rgba(230, 230, 230, 0.9) !important; /* 明るい背景に暗い文字 */
-      color: #171717 !important;
-      box-shadow: 0 2px 10px rgba(255,255,255,0.1) !important;
+      background-color: rgba(250, 250, 250, 0.95) !important; /* 明るい背景 */
+      color: #171717 !important; /* 暗い文字 */
+      border: 1px solid #ccc !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
   }
   div[style*="zIndex: 2010"] > h4 {
       color: #171717 !important;
-      border-bottom-color: #ccc !important;
+      border-bottom-color: #ddd !important;
   }
 
 
-  /* ExaminerDisplay のようなカードスタイルの要素 */
-  div[style*="border: 2px solid"] { /* isSelected で色が変わるものも含む */
-    background-color: var(--card-background) !important;
-    border-color: var(--card-border) !important; /* 通常時の境界線 */
+  /* ExaminerDisplay */
+  div[style*="textAlign: 'center'"][style*="minWidth: '150px'"] { /* ExaminerDisplayのコンテナを仮特定 */
+    background-color: var(--game-card-background) !important;
+    border-color: var(--game-card-border) !important; /* 通常時の境界線 */
+    color: var(--game-foreground) !important;
   }
-  div[style*="border: 2px solid blue"] { /* 選択時の境界線 (ダークモード用に調整) */
-    border-color: var(--primary-color) !important;
-  }
-  div[style*="backgroundColor: '#e0f7fa'"] { /* 選択時の背景色 (ダークモード用に調整) */
-    background-color: #003f5c !important; /* 暗めの青系背景 */
-  }
+  /* ExaminerDisplay 選択時 (style属性で動的に変わる部分) */
+  /* JavaScript側でクラスを付与してCSSで制御する方が望ましい */
+  /* 例: isSelected ? 'examiner-selected' : '' のようにクラスを付与 */
+  /* .examiner-selected {
+      border-color: var(--game-primary-color) !important;
+      background-color: #e0f7fa !important; /* ライトモードでの選択色
+  } */
 
-  /* タイトル戻るボタン (game.jsなど) */
+
+  /* タイトルへ戻るボタン */
   a[style*="backgroundColor: '#f0f0f0'"] {
-      background-color: var(--secondary-color) !important;
-      color: var(--button-text) !important;
-      border-color: var(--card-border) !important;
+      background-color: #f0f0f0 !important; /* ライトモードの色を維持 */
+      color: black !important;
+      border-color: #ccc !important;
   }
 }
